@@ -10,6 +10,8 @@ const symptomsInput = document.querySelector('#sintomas');
 const form = document.querySelector('#nueva-cita');
 const appointmentsContainer = document.querySelector('#citas');
 
+let editMode;
+
 class UI {
   printAlert( message, typeAlert ) {
     const mainContainer = document.querySelector('#contenido');
@@ -77,9 +79,17 @@ class UI {
 
       const deleteAppointmentButton = document.createElement('BUTTON');
       deleteAppointmentButton.classList.add('btn', 'btn-danger', 'mr-2');
-      deleteAppointmentButton.innerHTML = `Delete <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`
+      deleteAppointmentButton.innerHTML = `Delete <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
       deleteAppointmentButton.onclick = () => {
         deleteAppointment(id);
+      };
+
+      const editAppointmentButton = document.createElement('BUTTON');
+      editAppointmentButton.classList.add('btn', 'btn-info');
+      editAppointmentButton.innerHTML = `Edit <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>`;
+      editAppointmentButton.onclick = () => {
+        saveEditionAppointment(appointment);
       }
     
 
@@ -90,6 +100,7 @@ class UI {
       divAppointment.appendChild(hourPet);
       divAppointment.appendChild(symptomsPet);
       divAppointment.appendChild(deleteAppointmentButton);
+      divAppointment.appendChild(editAppointmentButton);
       appointmentsContainer.appendChild(divAppointment);
     });
   }
@@ -106,6 +117,10 @@ class Appointment {
 
   deleteAppointment(id) {
     this.appointments = this.appointments.filter(appointment => appointment.id !== id );
+  }
+
+  editAppointment(updatedAppointment) {
+    this.appointments = this.appointments.map( (appointment) => appointment.id === updatedAppointment.id ? updatedAppointment : appointment )
   }
 }
 
@@ -153,11 +168,29 @@ function newAppointment(e) {
     return;
   }
 
-  // add an unique id for each appointment
-  appointmentObject.id = Date.now();
+  if (editMode) {
+    console.log('editando');
+    manageAppointments.editAppointment( {...appointmentObject} )
 
-  // add new appointment to appointments array
-  manageAppointments.addAppointment( {...appointmentObject} );
+    form.querySelector('button[type="submit"]').textContent = 'Create Appointment';
+
+    // print an alert with successfull action
+    ui.printAlert('Appointment updated ok')
+
+    editMode = false;
+    
+  } else {
+    
+    // add an unique id for each appointment
+    appointmentObject.id = Date.now();
+    
+    // add new appointment to appointments array
+    manageAppointments.addAppointment( {...appointmentObject} );
+
+    // print an alert with successfull action
+    ui.printAlert('Appointments added ok')
+  }
+  
 
   // reset the form in the html
   form.reset();
@@ -185,4 +218,30 @@ function deleteAppointment(id) {
   ui.printAlert('Appointment deleted ok');
 
   ui.printAppointments( manageAppointments );
+}
+
+function saveEditionAppointment(appointment) {
+  
+  const { pet, owner, phone, date, hour, symptoms, id } = appointment;
+
+  // fill the inputs to edit each field
+  petInput.value = pet;
+  ownerInput.value = owner;
+  phoneInput.value = phone;
+  dateInput.value = date;
+  hourInput.value = hour;
+  symptomsInput.value = symptoms;
+
+  // fill the object appointment 
+  appointmentObject.pet = pet;
+  appointmentObject.owner = owner;
+  appointmentObject.phone = phone;
+  appointmentObject.date = date;
+  appointmentObject.hour = hour;
+  appointmentObject.symptoms = symptoms;
+  appointmentObject.id = id;
+
+  form.querySelector('button[type="submit"]').textContent = 'Save changes';
+
+  editMode = true;
 }
